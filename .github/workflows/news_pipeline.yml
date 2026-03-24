@@ -48,6 +48,20 @@ jobs:
           MAX_SEND_COUNT: '20'
           PYTHONUNBUFFERED: '1'
         run: |
+          set -o pipefail
           echo "[workflow] starting telegram news pipeline"
-          python -u main.py
+          python -u main.py 2>&1 | tee pipeline.log
           echo "[workflow] telegram news pipeline finished"
+
+      - name: Publish pipeline summary
+        if: always()
+        run: |
+          echo "## Telegram News Pipeline" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f pipeline.log ]; then
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            tail -n 200 pipeline.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "pipeline.log not found" >> "$GITHUB_STEP_SUMMARY"
+          fi
