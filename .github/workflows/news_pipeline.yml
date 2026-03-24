@@ -1,0 +1,49 @@
+name: Telegram News Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-news-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run-news-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NEWSAPI_KEY: ${{ secrets.NEWSAPI_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          UPSTASH_REDIS_STATE_KEY: telegram_news_pipeline_state
+          UPSTASH_REDIS_TTL_SECONDS: '86400'
+          NEWSAPI_QUERY: geopolitics OR military OR economy OR inflation OR missile OR sanctions
+          ENABLE_TRANSLATION: 'true'
+          FETCH_WINDOW_MINUTES: '60'
+          BURST_WINDOW_MINUTES: '30'
+          DEDUP_LOOKBACK_MINUTES: '1440'
+          STATE_MAX_ITEMS: '1000'
+          TITLE_SIMILARITY_THRESHOLD: '88'
+          MAX_SEND_COUNT: '20'
+        run: python main.py
