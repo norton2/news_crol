@@ -46,4 +46,8 @@ jobs:
           STATE_MAX_ITEMS: '1000'
           TITLE_SIMILARITY_THRESHOLD: '88'
           MAX_SEND_COUNT: '20'
-        run: python main.py
+          PYTHONUNBUFFERED: '1'
+        run: |
+          echo "[workflow] starting telegram news pipeline"
+          python -u main.py
+          echo "[workflow] telegram news pipeline finished"
